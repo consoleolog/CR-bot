@@ -1,44 +1,28 @@
-import io
+from pathlib import Path
+import openai
 
-from google.cloud.speech_v2 import SpeechClient
-from google.cloud.speech_v2.types import cloud_speech
+import os
+import time
+from dotenv import load_dotenv
+load_dotenv()
 
-import json
+OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
-filename = ""
+filename = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(time.time()))
 
-def transcribe_file_v2(project_id, recognizer_id, audio_file):
-    client = SpeechClient()
+speech_dir_path = Path("/mnt/c/Users/hands/PycharmProjects/CR-bot/speech")
+speech_file_path = speech_dir_path / f"{filename}.mp3"
 
-    request = cloud_speech.CreateRecognizerRequest(
-        parent=f"projects/{project_id}/loca",
-        recognizer_id=recognizer_id,
-        recogizer=cloud_speech.Recognizer(
-            language_codes=["kor"],
-            model="latest_long"
-        )
-    )
+# 디렉토리 생성 (존재하지 않을 경우)
+speech_dir_path.mkdir(parents=True, exist_ok=True)
 
-    operation = client.create_recognizer(request=request)
-    recognizer = operation.result()
+response = openai.audio.speech.create(
+  model="tts-1",
+  voice="alloy",
+  input="The quick brown fox jumped over the lazy dog."
+)
+response.stream_to_file(speech_file_path)
+# response.with_streaming_response().stream_to_file(str(speech_file_path))
 
-    with io.open(audio_file, "rb") as f:
-        content = f.read()
-
-        config = cloud_speech.RecognitionConfig(auto_decoding_config={})
-
-        request = cloud_speech.RecognizeRequest(
-            recognizer=recognizer.name, config=config, content=content
-        )
-
-        # Transcribes the audio into text
-        response = client.recognize(request=request)
-        data = []
-        for result in response.results:
-            data.append(result.alternatives[0].transcript)
-
-        with open(filename, "w") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-
-        f.close()
-        return response
+# 음성 파일 재생
+os.system(f"mpg321 {speech_file_path}")

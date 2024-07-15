@@ -1,6 +1,7 @@
 import discord
 
 import datetime
+from mike import stt
 from chatgpt import call_gpt
 import logging
 import time
@@ -25,18 +26,28 @@ file_handler = logging.FileHandler(f".logs/discord.log")
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
-
+in_voice = None
 class MyClient(discord.Client):
     async def on_ready(self):
         await self.change_presence(status=discord.Status.online, activity=discord.Game("꺼져"))
 
     async def on_message(self, message):
+        global in_voice
         if message.author == self.user:
             return
         if message.content == "입장":
+            in_voice = True
             await self.join(message)
         if message.content == "이제가봐":
             await self.out(message)
+
+        if in_voice is not None:
+            result = stt()
+
+
+
+
+
         # try:
         #     logger.info(f"{message.author} == {message.content}.")
         #     response = call_gpt(message.content)
@@ -44,8 +55,8 @@ class MyClient(discord.Client):
         # except Exception as e:
         #     logger.error(f"{message.author} == {message.content}.")
         #     await message.channel.send("똑바로 질문 하라고 했지")
-        logger.info(f"{message.author} == {message.content}.")
-        await message.channel.send("점검 중 입니다.")
+        # logger.info(f"{message.author} == {message.content}.")
+        # await message.channel.send("점검 중 입니다.")
 
 
     async def join(self, ctx):
