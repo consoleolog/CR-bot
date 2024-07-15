@@ -19,3 +19,5 @@ discord.py[voice]
 wave
 pyaudio
 SpeechRecognition
+fastapi
+uvicorn[standard]
